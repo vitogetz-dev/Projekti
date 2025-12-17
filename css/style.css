@@ -1,0 +1,176 @@
+/* === OSNOVNI STIL === */
+body{
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    padding-top: 70px;
+    background-color: #fff;
+}
+
+div.container {
+    padding: 20px;
+}
+
+/* === KOŠARICA === */
+#kosaricaGumb {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+#kosaricaProzor {
+    display: none;
+    position: fixed;
+    top: 120px;
+    right: 20px;
+    width: 320px;
+    background-color: white;
+    border: 2px solid #4CAF50;
+    border-radius: 10px;
+    padding: 20px;
+    z-index: 1001;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+/* === ACCORDION === */
+.accordion {
+    cursor: pointer;
+    background-color: #eee;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    width: 100%;
+    text-align: left;
+    outline: none;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.accordion:after {
+    content: '\25B6'; /* strelica desno */
+    font-size: 13px;
+    margin-left: auto;
+    transition: transform 0.2s;
+}
+
+.accordion.active:after {
+    transform: rotate(90deg);
+}
+
+.panel {
+    display: none;
+    padding-left: 20px;
+}
+
+.film {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+/* === GUMB PLATI === */
+.plati-btn {
+    margin-top: 15px;
+    padding: 10px;
+    width: 100%;
+    background-color: #2196F3;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* === KOLIČINA INPUT === */
+input[type="number"] {
+    width: 50px;
+    margin-left: 5px;
+}
+
+/* === NAVIGACIJA === */
+nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: #4CAF50;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 1002; /* iznad košarice */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+nav .logo {
+    color: white;
+    font-weight: bold;
+    font-size: 24px;
+    flex-grow: 1;
+}
+
+nav .nav-links {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+    margin-right: 40px;
+}
+
+
+nav .nav-links li a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+nav .nav-links li a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* === LOGOUT LINK === */
+nav .nav-links li a.logout-link {
+    background-color: #e53935;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+nav .nav-links li a.logout-link:hover {
+    background-color: #d32f2f;
+}
+
+/* === LOGIN FORMA === */
+.login-container {
+    width: 300px;
+    margin: 100px auto;
+    text-align: center;
+}
+
+.login-container input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}

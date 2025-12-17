@@ -1,0 +1,175 @@
+<?php
+    session_start();
+    require 'includes/db.php';
+
+    if (!isset($_SESSION['username'])){
+        header("Location: auth/login.php");
+        exit;
+    }
+?>
+
+<!DOCTYPE html>
+<html lang="hr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Naslovnica</title>
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+
+    <body>
+        <?php include 'includes/nav.php'; ?>
+
+        <form method="get" class="kategorije-form">
+            <h3>Odaberi kategorije:</h3>
+            <?php
+            $sviZanrovi = $pdo->query("SELECT * FROM zanrovi ORDER BY naziv")->fetchAll();
+            foreach ($sviZanrovi as $zanr) {
+                $checked = (isset($_GET['kategorije']) && in_array($zanr['naziv'], $_GET['kategorije'])) ? 'checked' : '';
+                echo "<label class='checkbox-kategorija'>
+                        <input type='checkbox' name='kategorije[]' value='{$zanr['naziv']}' $checked> " . htmlspecialchars($zanr['naziv']) . "
+                    </label>";
+            }
+            ?>
+            <button type="submit" class="btn-filtriraj">Filtriraj </button>
+        </form>
+
+        <button id="kosaricaGumb">Košarica (0)</button>
+
+        <div class="container">
+            <h2>Videoteka</h2>
+
+            <div id="filmovi">
+                <?php
+                    if (isset($_GET['kategorije']) && is_array($_GET['kategorije']) && count($_GET['kategorije']) > 0)
+                    {
+                        $placeholders = implode(',', array_fill(0, count($_GET['kategorije']), '?'));
+                        $stmt = $pdo->prepare
+                        ("
+                            SELECT DISTINCT f.* FROM filmovi f
+                            JOIN film_zanr fz ON f.IDFilm = fz.IDFilm
+                            JOIN zanrovi z ON z.IDZanr = fz.IDZanr
+                            WHERE z.naziv IN ($placeholders)
+                        ");
+                        $stmt->execute($_GET['kategorije']);
+                    } 
+                    else{
+                        $stmt = $pdo->query("SELECT * FROM filmovi");
+                    }
+
+                    $filmovi = $stmt->fetchAll();
+
+                    if (count($filmovi) === 0)
+                    {
+                        echo "<p>Nema filmova za prikazane kategorije.</p>";
+                    }
+
+                    foreach ($filmovi as $film):
+                        $stmtZ = $pdo->prepare
+                        ("
+                            SELECT z.naziv 
+                            FROM zanrovi z
+                            JOIN film_zanr fz ON z.IDZanr = fz.IDZanr
+                            WHERE fz.IDFilm = ?
+                        ");
+                        $stmtZ->execute([$film['IDFilm']]);
+                        $zanroviFilma = $stmtZ->fetchAll(PDO::FETCH_COLUMN);
+                        $zanroviText = implode(', ', $zanroviFilma);
+                ?>
+                
+                <div class="film">
+                    <?php if ($film['slika']): ?>
+                        <img src="<?= htmlspecialchars($film['slika']) ?>" alt="Slika filma" style="max-width: 200px;"><br>
+                    <?php endif; ?>
+
+                    <strong><?= htmlspecialchars($film['naziv']) ?> <?= $film['godina'] ? '(' . $film['godina'] . ')' : '' ?></strong><br>
+                    Žanrovi: <?= htmlspecialchars($zanroviText) ?><br>
+                    Cijena: <?= number_format($film['cijena'], 2) ?> €<br>
+
+                    <!--  gumb za dodavanje u košaricu -->
+                    <button onclick='dodajUKosaricu(<?= json_encode([
+                        "naziv" => $film["naziv"],
+                        "cijena" => $film["cijena"]
+                    ]) ?>)'>
+                        Dodaj u košaricu
+                    </button>
+                </div>
+                <hr>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <div id="kosaricaProzor">
+            <h3>Vaša košarica</h3>
+            <ul id="stavkeKosarice"></ul>
+            <p id="ukupnaCijena">Ukupno: 0 €</p>
+            <button onclick="plati()">Plati</button>
+        </div>
+
+        <script>
+            let kosarica = [];
+
+            function dodajUKosaricu(film)
+            {
+                let postoji = kosarica.find(f => f.naziv === film.naziv);
+                if (postoji) {
+                    postoji.kolicina++;
+                } else {
+                    kosarica.push({ ...film, kolicina: 1 });
+                }
+                prikaziKosaricu();
+            }
+
+            function prikaziKosaricu()
+            {
+                const stavkeKosarice = document.getElementById("stavkeKosarice");
+                const ukupnaCijena = document.getElementById("ukupnaCijena");
+                const kosaricaGumb = document.getElementById("kosaricaGumb");
+
+                stavkeKosarice.innerHTML = "";
+                let ukupno = 0;
+
+                kosarica.forEach((stavka, i) =>
+                {
+                    const li = document.createElement("li");
+                    li.innerHTML = `
+                        ${stavka.naziv} - ${stavka.cijena} € x 
+                        <input type="number" value="${stavka.kolicina}" min="1" onchange="promijeniKolicinu(${i}, this.value)">
+                        = ${(stavka.kolicina * stavka.cijena).toFixed(2)} €
+                        <button onclick="obrisiStavku(${i})">Obriši</button>
+                    `;
+                    stavkeKosarice.appendChild(li);
+                    ukupno += stavka.kolicina * stavka.cijena;
+                });
+
+                ukupnaCijena.innerText = `Ukupno: ${ukupno.toFixed(2)} €`;
+                kosaricaGumb.innerText = `Košarica (${kosarica.length})`;
+            }
+
+            function promijeniKolicinu(i, nova)
+            {
+                kosarica[i].kolicina = parseInt(nova);
+                prikaziKosaricu();
+            }
+
+            function obrisiStavku(i)
+            {
+                kosarica.splice(i, 1);
+                prikaziKosaricu();
+            }
+
+            function plati()
+            {
+                alert("Hvala na posudbi! 🎬");
+                kosarica = [];
+                prikaziKosaricu();
+                document.getElementById("kosaricaProzor").style.display = "none";
+            }
+
+            document.getElementById("kosaricaGumb").addEventListener("click", () =>
+            {
+                const prozor = document.getElementById("kosaricaProzor");
+                prozor.style.display = (prozor.style.display === "none" || prozor.style.display === "") ? "block" : "none";
+            });
+        </script>
+    </body>
+</html>
